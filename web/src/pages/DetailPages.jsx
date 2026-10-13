@@ -16,7 +16,7 @@ function BackLink({ tab }) {
   const params = new URLSearchParams(search || '');
   if (!params.has('tab')) params.set('tab', tab);
   return (
-    <Link className="back-link" to={`/browse?${params}`}>
+    <Link className="back-link" to={`/explore?${params}`}>
       ← Back to {tab}
     </Link>
   );
@@ -67,7 +67,7 @@ export function ClientDetailPage() {
                 variant="secondary"
                 onClick={() => {
                   setActor({ id: c.id, name: c.name });
-                  navigate('/browse?tab=contracts&mine=1');
+                  navigate('/explore?tab=contracts&mine=1');
                 }}
               >
                 Their contracts

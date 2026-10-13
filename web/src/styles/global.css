@@ -204,7 +204,14 @@ h3 { font-size: 1rem; }
 .input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .input-invalid { border-color: var(--danger); }
 .input-sm { padding: 4px 8px; width: 110px; }
-select.input { padding-right: 28px; }
+select.input {
+  appearance: none;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m3 6 5 5 5-5' stroke='%2317233b' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+}
 .search-input { width: 240px; }
 .readonly-field { padding: 7px 0; font-weight: 600; }
 .checkbox, .switch { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; }

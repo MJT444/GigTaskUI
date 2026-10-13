@@ -99,7 +99,7 @@ Personas are described in [requirements and screens](docs/requirements_and_scree
 
 | Screen | Workflow | What it shows | Database work |
 |---|---|---|---|
-| **Browse** | — | Clients, freelancers, contracts: search, filters, pagination, detail pages (portfolio on freelancer pages) | `LIMIT/OFFSET` on indexed columns; never the whole table |
+| **Explore** | — | Clients, freelancers, contracts: search, filters, pagination, detail pages (portfolio on freelancer pages) | `LIMIT/OFFSET` on indexed columns; never the whole table |
 | **Fund gig** | 1 | Form → escrow before/after, the new contract, the new audit row; friendly failures with a fix | `CALL fund_gig` in `REPEATABLE READ`; `trg_wallet_audit`; `idx_active_gig` |
 | **Contract page** | 1 | FUNDED → IN_PROGRESS → COMPLETED | `idx_active_gig` on start; forward-only checked in the API |
 | **Escrow** | Audit | Audit rows, date filter, running balance, rows-matching count, top-up | window `SUM() OVER` from the current balance back, then filter |
@@ -112,7 +112,7 @@ Every screen has loading, empty and error states. Technical errors stay in API r
 
 ### Demo script (outline for the video)
 
-1. **Browse → Contracts**, filter *In progress*, page 3, open a contract (50,000 rows, one page at a time).
+1. **Explore → Contracts**, filter *In progress*, page 3, open a contract (50,000 rows, one page at a time).
 2. **Fund gig**: pick an *Available* freelancer, ₹1,500, *Start work now* ✓ → escrow before/after + the DEBIT audit row.
 3. Fund the same freelancer again → **already has a gig in progress** (partial unique index), nothing charged → **Mark that contract completed** → fund again: works.
 4. **More than escrow** → shortfall → **Top up** → CREDIT row.

@@ -33,11 +33,8 @@ export function BrowsePage() {
 
   return (
     <>
-      <PageHeader
-        title="Browse"
-        description="Clients, freelancers and contracts from PostgreSQL. Pages are loaded one at a time from the server."
-      />
-      <Tabs label="Entity" tabs={TABS} value={tab} onChange={(t) => setParams(new URLSearchParams({ tab: t }))} />
+      <PageHeader title="Explore" description="Search clients and freelancers, then review their gigs and progress." />
+      <Tabs label="Explore sections" tabs={TABS} value={tab} onChange={(t) => setParams(new URLSearchParams({ tab: t }))} />
       {tab === 'clients' && <ClientsTab params={params} update={update} />}
       {tab === 'freelancers' && <FreelancersTab params={params} update={update} />}
       {tab === 'contracts' && <ContractsTab params={params} update={update} />}
@@ -88,7 +85,7 @@ function ClientsTab({ params, update }) {
     placeholderData: keepPreviousData,
   });
   return (
-    <Card title="Clients" subtitle="Businesses that fund gigs from their escrow balance" actions={<SearchBox initial={search} placeholder="Search clients by name" onSearch={(s) => update({ search: s, page: '' })} />}>
+    <Card title="Clients" subtitle="See who is funding gigs and check their escrow balance." actions={<SearchBox initial={search} placeholder="Search clients by name" onSearch={(s) => update({ search: s, page: '' })} />}>
       <QueryState query={q} isEmpty={(d) => d.items.length === 0} emptyTitle="No clients found" empty={search && `Nothing matches “${search}”.`}>
         {(d) => (
           <>
@@ -124,7 +121,7 @@ function FreelancersTab({ params, update }) {
   return (
     <Card
       title="Freelancers"
-      subtitle="Workers who take gigs; those with a gig in progress cannot start another one yet"
+      subtitle="Find available talent and view their current workload."
       actions={
         <div className="filters">
           <select className="input" value={available} aria-label="Availability" onChange={(e) => update({ available: e.target.value, page: '' })}>
@@ -172,7 +169,7 @@ function ContractsTab({ params, update }) {
   return (
     <Card
       title="Contracts"
-      subtitle="Newest first"
+      subtitle="See funded, active, and completed gigs."
       actions={
         <div className="filters">
           <select className="input" value={status} aria-label="Filter by status" onChange={(e) => update({ status: e.target.value, page: '' })}>

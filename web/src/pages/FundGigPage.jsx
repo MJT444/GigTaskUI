@@ -93,7 +93,6 @@ export function FundGigPage() {
             <Field label="Client">
               <div className="readonly-field">
                 {actor.name}
-                <span className="muted"> (change with “Acting as client” at the top)</span>
               </div>
             </Field>
 

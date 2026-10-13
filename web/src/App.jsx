@@ -1,4 +1,4 @@
-import { Link, Navigate, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout.jsx';
 import { EmptyState } from './components/StateViews.jsx';
 import { AnalyticsPage } from './pages/AnalyticsPage.jsx';
@@ -13,8 +13,10 @@ export function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/browse" replace />} />
-        <Route path="browse" element={<BrowsePage />} />
+        <Route index element={<Navigate to="/explore" replace />} />
+        <Route path="explore" element={<BrowsePage />} />
+        <Route path="directory" element={<ExploreRedirect />} />
+        <Route path="browse" element={<ExploreRedirect />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="freelancers/:id" element={<FreelancerDetailPage />} />
         <Route path="contracts/:id" element={<ContractDetailPage />} />
@@ -27,11 +29,16 @@ export function App() {
           path="*"
           element={
             <EmptyState title="Page not found">
-              <Link to="/browse">Go to Browse</Link>
+              <Link to="/explore">Go to Explore</Link>
             </EmptyState>
           }
         />
       </Route>
     </Routes>
   );
+}
+
+function ExploreRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/explore${search}`} replace />;
 }

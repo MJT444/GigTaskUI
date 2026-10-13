@@ -39,7 +39,7 @@ function renderRoutes(initialUrl) {
         <ActorProvider>
           <HistoryControls />
           <Routes>
-            <Route path="/browse" element={<BrowsePage />} />
+            <Route path="/explore" element={<BrowsePage />} />
             <Route path="/contracts/:id" element={<ContractDetailPage />} />
           </Routes>
         </ActorProvider>
@@ -51,7 +51,7 @@ function renderRoutes(initialUrl) {
 beforeEach(() => window.localStorage.clear());
 afterEach(() => vi.unstubAllGlobals());
 
-test('contract detail Back link restores the Browse status and page', async () => {
+test('contract detail Back link restores the Explore status and page', async () => {
   vi.stubGlobal('fetch', vi.fn((url) => {
     const path = String(url);
     if (path.startsWith('/api/contracts?')) {
@@ -60,7 +60,7 @@ test('contract detail Back link restores the Browse status and page', async () =
     if (path === `/api/contracts/${contract.id}`) return json(contract);
     throw new Error(`Unexpected request: ${path}`);
   }));
-  renderRoutes('/browse?tab=contracts&status=IN_PROGRESS&page=3');
+  renderRoutes('/explore?tab=contracts&status=IN_PROGRESS&page=3');
 
   await userEvent.setup().click(await screen.findByText('Meera'));
   const backLink = await screen.findByRole('link', { name: '← Back to contracts' });
@@ -69,13 +69,13 @@ test('contract detail Back link restores the Browse status and page', async () =
   expect(url.searchParams.get('page')).toBe('3');
 
   await userEvent.setup().click(backLink);
-  expect(screen.getByTestId('location')).toHaveTextContent('/browse?tab=contracts&status=IN_PROGRESS&page=3');
+  expect(screen.getByTestId('location')).toHaveTextContent('/explore?tab=contracts&status=IN_PROGRESS&page=3');
   expect(await screen.findByText(/Page 3 of 4/)).toBeInTheDocument();
 });
 
 test('browser Back restores the previous search and input value', async () => {
   vi.stubGlobal('fetch', vi.fn(() => json({ items: [], page: 1, pageSize: 20, total: 0, totalPages: 1 })));
-  renderRoutes('/browse?search=Acevedo');
+  renderRoutes('/explore?search=Acevedo');
   const search = screen.getByRole('searchbox', { name: 'Search clients by name' });
   expect(search).toHaveValue('Acevedo');
 
@@ -84,5 +84,5 @@ test('browser Back restores the previous search and input value', async () => {
   await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('search=Adams'));
   await userEvent.setup().click(screen.getByRole('button', { name: 'Browser back' }));
   await waitFor(() => expect(search).toHaveValue('Acevedo'));
-  expect(screen.getByTestId('location')).toHaveTextContent('/browse?search=Acevedo');
+  expect(screen.getByTestId('location')).toHaveTextContent('/explore?search=Acevedo');
 });

@@ -4,7 +4,7 @@ import { useActor } from '../context/ActorContext.jsx';
 import { ClientSearch } from './pickers.jsx';
 
 const NAV = [
-  { to: '/browse', label: 'Browse', db: 'pg' },
+  { to: '/explore', label: 'Explore', db: 'pg' },
   { to: '/fund', label: 'Fund gig', db: 'pg' },
   { to: '/escrow', label: 'Escrow', db: 'pg' },
   { to: '/analytics', label: 'Analytics', db: 'pg' },
@@ -21,7 +21,7 @@ export function Layout() {
     <div className="app">
       <header className="topbar">
         <div className="topbar-inner">
-          <NavLink to="/browse" className="brand" onClick={() => setMenuOpen(false)}>
+          <NavLink to="/explore" className="brand" onClick={() => setMenuOpen(false)}>
             <span className="brand-mark" aria-hidden="true">
               G
             </span>
