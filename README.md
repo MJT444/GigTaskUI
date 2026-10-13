@@ -9,7 +9,7 @@ live map, and explore reviews and portfolios.
 | | |
 |---|---|
 | **Team number** | `TODO` |
-| **GitHub repository** | https://github.com/MJT444/bitestreamUI |
+| **GitHub repository** | https://github.com/MJT444/GitTaskUI |
 | **Inherited repository** | https://github.com/MohitSharma25/GitTask (commit `5d38fee`) |
 | **Final commit hash** | `TODO — after the last push` |
 | **Demo video (≤ 5 min)** | `TODO — link` |
