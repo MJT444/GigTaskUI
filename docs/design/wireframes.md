@@ -96,3 +96,14 @@
 ```
 
 Every screen also needs explicit loading, empty, and error presentations. The numbers above are layout examples, not claims about seeded data.
+
+## Changes made while building
+
+- **Fund a gig** gained a *Start work now* option (on by default). It moves the new contract to `IN_PROGRESS` in the same transaction, so a second active gig is refused by `idx_active_gig` at funding time (see the handover note). Failures show the fix inline: a *Top up* button for insufficient escrow, and the blocking contract with *Mark completed* for a busy freelancer.
+- **Escrow audit** shows two balances per row: `balance_after` stored at the time and the running balance computed back from today's balance, with a ✓/✗ per row and a count of matching rows (the inherited seed rows are synthetic and generally don't match; the screen explains this).
+- **Analytics** ranking is the Part A query's own output (top 50 freelancer-days, `DENSE_RANK`) with a 30/60/90-day period; clicking a row opens that freelancer's chart.
+- **Nearby workers** uses preset job sites plus click-on-map instead of typed coordinates, adds *Workers / Raw pings*, a ping-age filter, *Live* polling and *Add fresh pings*.
+- **Reviews** adds a *Top-rated workers* list (the `overallWorkerRatings` facet) that drills into one freelancer, and a review list filtered by clicking a star bar.
+- The demo actor is a **client** (“Acting as client”), because clients fund gigs and own the escrow.
+
+Implemented look and components: [design_system.md](design_system.md).
