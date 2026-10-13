@@ -88,10 +88,13 @@ h3 { font-size: 1rem; }
   position: sticky; top: 0; z-index: 1000; /* above Leaflet panes (400-700) */
 }
 .topbar-inner {
-  max-width: 1280px; margin: 0 auto; padding: 10px 20px;
-  display: flex; align-items: center; gap: 20px;
+  max-width: 1280px; margin: 0 auto; padding: 0 20px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'brand controls' 'nav nav';
+  align-items: center; column-gap: 20px;
 }
 .brand {
+  grid-area: brand; width: max-content; padding: 12px 0;
   display: flex; align-items: center; gap: 8px;
   font-weight: 700; font-size: 1.05rem; color: var(--text); text-decoration: none;
 }
@@ -100,10 +103,15 @@ h3 { font-size: 1rem; }
   display: grid; place-items: center;
   background: var(--accent); color: #fff; font-size: 0.9rem;
 }
-.nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav {
+  grid-area: nav; display: flex; gap: 4px; min-width: 0;
+  border-top: 1px solid var(--border); padding: 6px 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav::-webkit-scrollbar { display: none; }
 .nav-link {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px; border-radius: var(--radius-sm);
+  flex: none; white-space: nowrap; padding: 7px 10px; border-radius: var(--radius-sm);
   color: var(--muted); text-decoration: none; font-weight: 500; font-size: 0.93rem;
 }
 .nav-link:hover { color: var(--text); background: var(--surface-2); }
@@ -112,19 +120,10 @@ h3 { font-size: 1rem; }
   font-size: 0.66rem; font-weight: 600; letter-spacing: 0.02em;
   padding: 1px 5px; border-radius: 4px; border: 1px solid currentColor; opacity: 0.7;
 }
-.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.topbar-right { grid-area: controls; display: flex; align-items: center; gap: 16px; }
 .acting-as { display: flex; align-items: center; gap: 8px; }
 .acting-label { font-size: 0.78rem; color: var(--muted); }
 .menu-toggle { display: none; }
-
-.health { display: flex; gap: 10px; font-size: 0.75rem; color: var(--muted); }
-.health-dot { display: inline-flex; align-items: center; gap: 5px; }
-.health-dot::before {
-  content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong);
-}
-.health-dot.ok::before { background: var(--success); }
-.health-dot.down::before { background: var(--danger); }
-.health-dot.down { color: var(--danger); }
 
 .main {
   flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px 20px 40px;
@@ -271,6 +270,7 @@ select.input { padding-right: 28px; }
   color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
+.table th.num { text-align: right; }
 .table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .row-clickable { cursor: pointer; }
@@ -440,19 +440,18 @@ select.input { padding-right: 28px; }
   .grid-analytics, .grid-reviews { grid-template-columns: minmax(0, 1fr); }
   .map-layout { grid-template-columns: minmax(0, 1fr); }
   .results-card { max-height: none; }
-  .health { display: none; }
 }
 
 @media (max-width: 900px) {
-  .topbar-inner { flex-wrap: wrap; gap: 10px; }
+  .topbar-inner { grid-template-areas: 'brand menu' 'controls controls' 'nav nav'; }
   .menu-toggle {
-    display: inline-flex; margin-left: auto; font: inherit; font-size: 0.85rem;
+    grid-area: menu; display: inline-flex; justify-self: end; font: inherit; font-size: 0.85rem;
     border: 1px solid var(--border-strong); background: var(--surface); border-radius: var(--radius-sm); padding: 5px 10px;
   }
-  .nav { display: none; order: 3; width: 100%; flex-direction: column; }
+  .nav { display: none; flex-direction: column; overflow: visible; }
   .nav-open { display: flex; }
   .nav-link { padding: 10px; }
-  .topbar-right { order: 2; width: 100%; margin-left: 0; justify-content: space-between; }
+  .topbar-right { justify-content: flex-end; padding-bottom: 10px; }
   .grid-2, .grid-checkout { grid-template-columns: minmax(0, 1fr); }
   .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .toolbar-actions { margin-left: 0; }

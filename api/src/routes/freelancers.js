@@ -7,6 +7,8 @@ import { loadFreelancer } from '../lib/lookups.js';
 export const freelancersRouter = Router();
 
 // GET /api/freelancers?search=&available=true|false&page=&pageSize=
+// "Available" means able to start a gig: marked available and without an
+// IN_PROGRESS contract. The inverse includes unavailable and busy workers.
 freelancersRouter.get(
   '/',
   asyncHandler(async (req, res) => {
@@ -15,7 +17,12 @@ freelancersRouter.get(
     const pattern = search ? `%${search}%` : null;
     const available = req.query.available === 'true' ? true : req.query.available === 'false' ? false : null;
 
-    const where = `($1::text IS NULL OR f.name ILIKE $1) AND ($2::boolean IS NULL OR f.is_available = $2)`;
+    const canStart = `f.is_available AND NOT EXISTS (
+      SELECT 1 FROM contracts active
+      WHERE active.freelancer_id = f.id AND active.status = 'IN_PROGRESS'
+    )`;
+    const where = `($1::text IS NULL OR f.name ILIKE $1)
+                   AND ($2::boolean IS NULL OR (${canStart}) = $2)`;
     const [rows, count] = await Promise.all([
       query(
         `SELECT f.id, f.name, f.latitude, f.longitude, f.is_available,

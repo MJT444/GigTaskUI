@@ -21,17 +21,10 @@ export function EmptyState({ title = 'Nothing here yet', children }) {
 }
 
 export function ErrorState({ error, onRetry }) {
-  const hint =
-    error?.code === 'NETWORK'
-      ? 'Start the API with `npm start` inside the api folder.'
-      : error?.code === 'DATABASE_UNAVAILABLE'
-        ? 'Start the database and press Try again.'
-        : null;
   return (
     <div className="state state-error" role="alert">
       <strong>Could not load this</strong>
-      <p>{error?.message || 'Unknown error'}</p>
-      {hint && <p className="muted">{hint}</p>}
+      <p>{error?.message || 'The service is temporarily unavailable. Please try again.'}</p>
       {onRetry && (
         <Button variant="secondary" size="sm" onClick={onRetry}>
           Try again

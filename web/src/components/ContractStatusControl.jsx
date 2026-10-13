@@ -58,12 +58,6 @@ export function ContractStatusControl({ contract, onChanged }) {
       {m.isError && (
         <Alert tone="danger" title={m.error.code === 'GIG_ALREADY_IN_PROGRESS' ? 'Freelancer is busy' : undefined}>
           {m.error.message}
-          {m.error.code === 'GIG_ALREADY_IN_PROGRESS' && (
-            <span className="muted">
-              {' '}
-              Refused by the partial unique index <code>idx_active_gig</code>.
-            </span>
-          )}
         </Alert>
       )}
       {blocking && <BlockingContract contract={blocking} onCleared={() => setBlocking(null)} />}

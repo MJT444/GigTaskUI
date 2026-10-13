@@ -21,10 +21,11 @@ const FREELANCER = {
 const json = (status, body) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
 
-function mockApi(onFund) {
+function mockApi(onFund, { freelancerDetail = () => FREELANCER } = {}) {
   globalThis.fetch = vi.fn((url, init = {}) => {
     const u = String(url);
     if (u.startsWith('/api/freelancers?')) return json(200, { items: [FREELANCER], page: 1, pageSize: 8, total: 1, totalPages: 1 });
+    if (u === `/api/freelancers/${FREELANCER.id}`) return json(200, freelancerDetail());
     if (u === `/api/clients/${CLIENT.id}`) {
       return json(200, { ...CLIENT, escrow_balance: '5000.00', stats: { funded: 1, in_progress: 0, completed: 3 } });
     }
@@ -60,10 +61,12 @@ beforeEach(() => window.localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe('Fund gig', () => {
-  test('success shows escrow before/after and the audit row written by the trigger', async () => {
+  test('success shows escrow before/after and the recorded account activity', async () => {
     const calls = [];
+    let started = false;
     mockApi((body) => {
       calls.push(body);
+      started = true;
       return json(201, {
         balanceBefore: '5000.00',
         balanceAfter: '3500.00',
@@ -83,15 +86,16 @@ describe('Fund gig', () => {
           created_at: new Date().toISOString(),
         },
       });
-    });
+    }, { freelancerDetail: () => ({ ...FREELANCER, in_progress_contract_id: started ? 'k-1' : null }) });
     renderPage();
     await fillAndSubmit('1500');
 
     expect(await screen.findByRole('heading', { name: 'Gig funded' })).toBeInTheDocument();
     expect(calls).toEqual([{ clientId: CLIENT.id, freelancerId: FREELANCER.id, budget: '1500', startNow: true }]);
-    expect(screen.getByText('New wallet_audit_logs row')).toBeInTheDocument();
+    expect(screen.getByText('Escrow activity')).toBeInTheDocument();
     expect(screen.getByText('audit-1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark completed' })).toBeInTheDocument();
+    expect(await screen.findByText('Gig in progress')).toBeInTheDocument();
   });
 
   test('unticking "Start work now" sends startNow: false', async () => {
@@ -124,7 +128,7 @@ describe('Fund gig', () => {
     expect(screen.getByRole('button', { name: /Top up .*4,000\.00/ })).toBeInTheDocument();
   });
 
-  test('busy freelancer names the partial unique index and the blocking contract', async () => {
+  test('busy freelancer shows a clear next step and the blocking contract', async () => {
     mockApi(() =>
       json(409, {
         error: {
@@ -138,7 +142,8 @@ describe('Fund gig', () => {
     await fillAndSubmit('300');
 
     expect(await screen.findByRole('heading', { name: 'This freelancer already has a gig in progress' })).toBeInTheDocument();
-    expect(screen.getAllByText('idx_active_gig').length).toBeGreaterThan(0);
+    expect(screen.getByText(/Turn off “Start work now” to fund this gig for later/)).toBeInTheDocument();
+    expect(screen.queryByText(/idx_active_gig/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark that contract completed' })).toBeInTheDocument();
   });
 
@@ -147,6 +152,16 @@ describe('Fund gig', () => {
     renderPage();
     const user = userEvent.setup();
     await user.type(screen.getByLabelText(/Budget/), '12.345');
+    expect(screen.getByRole('button', { name: 'Fund gig' })).toBeDisabled();
+  });
+
+  test('zero budget cannot be submitted', async () => {
+    mockApi(() => json(500, {}));
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Freelancer' }));
+    await user.click(await screen.findByRole('option', { name: /Meera Iyer/ }));
+    await user.type(screen.getByLabelText(/Budget/), '0');
     expect(screen.getByRole('button', { name: 'Fund gig' })).toBeDisabled();
   });
 });

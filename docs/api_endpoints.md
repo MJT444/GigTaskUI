@@ -19,7 +19,7 @@ Lists return `{ items, page, pageSize, total, totalPages }` (`pageSize` ≤ 100)
 |---|---|---|
 | `GET /api/clients` | `search`, `page`, `pageSize` | clients + `escrow_balance`, `active_contracts` |
 | `GET /api/clients/:id` | — | client + `stats {total_contracts, funded, in_progress, completed, total_budget, last_contract_at}` |
-| `GET /api/freelancers` | `search`, `available=true\|false`, `page`, `pageSize` | freelancers + `is_available`, `in_progress_contract_id` |
+| `GET /api/freelancers` | `search`, `available=true\|false`, `page`, `pageSize` | freelancers + `is_available`, `in_progress_contract_id`; `available=true` means marked available with no gig in progress; `false` includes unavailable or busy workers |
 | `GET /api/freelancers/:id` | — | freelancer + live `stats` + `lifetimeStatsView` (materialized view row) |
 | `GET /api/contracts` | `clientId`, `freelancerId`, `status`, `page`, `pageSize` | contracts newest first, with names |
 | `GET /api/contracts/:id` | — | one contract |

@@ -107,8 +107,8 @@ Personas are described in [requirements and screens](docs/requirements_and_scree
 | **Workers map** | 3 | Job site + 5 km circle, nearest-first list, 5 s polling, new pings highlighted | `$geoNear` on the `2dsphere` index |
 | **Reviews** | 4 | Rating distribution, top tags, overall average, top workers, reviews; a Portfolio document | one `$facet`; `Portfolios.findOne` |
 
-Every screen has loading, empty and error states; the header shows PostgreSQL and MongoDB health separately;
-**Acting as client** switches the demo actor (no real login).
+Every screen has loading, empty and error states. Technical errors stay in API responses;
+`GET /api/health` reports PostgreSQL and MongoDB health separately. **Acting as client** switches the demo actor (no real login).
 
 ### Demo script (outline for the video)
 

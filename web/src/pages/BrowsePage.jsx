@@ -28,7 +28,7 @@ export function BrowsePage() {
   const update = (patch) => {
     const next = new URLSearchParams(params);
     Object.entries(patch).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
-    setParams(next, { replace: true });
+    setParams(next);
   };
 
   return (
@@ -37,7 +37,7 @@ export function BrowsePage() {
         title="Browse"
         description="Clients, freelancers and contracts from PostgreSQL. Pages are loaded one at a time from the server."
       />
-      <Tabs label="Entity" tabs={TABS} value={tab} onChange={(t) => setParams(new URLSearchParams({ tab: t }), { replace: true })} />
+      <Tabs label="Entity" tabs={TABS} value={tab} onChange={(t) => setParams(new URLSearchParams({ tab: t }))} />
       {tab === 'clients' && <ClientsTab params={params} update={update} />}
       {tab === 'freelancers' && <FreelancersTab params={params} update={update} />}
       {tab === 'contracts' && <ContractsTab params={params} update={update} />}
@@ -53,6 +53,12 @@ function SearchBox({ initial, onSearch, placeholder }) {
   const onSearchRef = useRef(onSearch);
   onSearchRef.current = onSearch;
   const lastRef = useRef(initial || '');
+  // Browser back/forward can change the URL while this input stays mounted.
+  useEffect(() => {
+    const next = initial || '';
+    lastRef.current = next;
+    setText(next);
+  }, [initial]);
   // Push the value up once typing pauses (not on first render).
   useEffect(() => {
     if (debounced !== lastRef.current) {
@@ -90,7 +96,7 @@ function ClientsTab({ params, update }) {
               caption="Clients"
               dimmed={q.isPlaceholderData}
               rows={d.items}
-              onRowClick={(c) => navigate(`/clients/${c.id}`)}
+              onRowClick={(c) => navigate(`/clients/${c.id}`, { state: { browseSearch: params.toString() } })}
               columns={[
                 { key: 'name', header: 'Client' },
                 { key: 'escrow_balance', header: 'Escrow balance', align: 'right', render: (c) => <Money value={c.escrow_balance} /> },
@@ -118,13 +124,13 @@ function FreelancersTab({ params, update }) {
   return (
     <Card
       title="Freelancers"
-      subtitle="Workers who take gigs; “Gig in progress” = blocked by idx_active_gig"
+      subtitle="Workers who take gigs; those with a gig in progress cannot start another one yet"
       actions={
         <div className="filters">
           <select className="input" value={available} aria-label="Availability" onChange={(e) => update({ available: e.target.value, page: '' })}>
             <option value="">Any availability</option>
-            <option value="true">Available</option>
-            <option value="false">Unavailable</option>
+            <option value="true">Available to start</option>
+            <option value="false">Unavailable or busy</option>
           </select>
           <SearchBox initial={search} placeholder="Search freelancers by name" onSearch={(s) => update({ search: s, page: '' })} />
         </div>
@@ -137,7 +143,7 @@ function FreelancersTab({ params, update }) {
               caption="Freelancers"
               dimmed={q.isPlaceholderData}
               rows={d.items}
-              onRowClick={(f) => navigate(`/freelancers/${f.id}`)}
+              onRowClick={(f) => navigate(`/freelancers/${f.id}`, { state: { browseSearch: params.toString() } })}
               columns={[
                 { key: 'name', header: 'Freelancer' },
                 { key: 'state', header: 'Status', render: (f) => <FreelancerState f={f} /> },
@@ -191,7 +197,7 @@ function ContractsTab({ params, update }) {
               caption="Contracts"
               dimmed={q.isPlaceholderData}
               rows={d.items}
-              onRowClick={(k) => navigate(`/contracts/${k.id}`)}
+              onRowClick={(k) => navigate(`/contracts/${k.id}`, { state: { browseSearch: params.toString() } })}
               columns={[
                 { key: 'created_at', header: 'Funded', render: (k) => formatDateTime(k.created_at) },
                 { key: 'client_name', header: 'Client' },

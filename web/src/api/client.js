@@ -1,12 +1,32 @@
-// One place for all HTTP calls. Every failure becomes an ApiError with a
-// stable `code` the screens can switch on (see api/src/lib/pgErrors.js).
+// One place for all HTTP calls. Keep server diagnostics in the Network response,
+// while Error.message stays safe to render in the UI.
+
+const USER_MESSAGES = {
+  INSUFFICIENT_BALANCE: 'Not enough money in escrow to fund this gig. Nothing was charged.',
+  GIG_ALREADY_IN_PROGRESS: 'This freelancer is already working on another gig.',
+  INVALID_AMOUNT: 'Enter an amount greater than zero with at most two decimal places.',
+  AMOUNT_TOO_LARGE: 'That amount is too large.',
+  CLIENT_NOT_FOUND: 'That client does not exist.',
+  FREELANCER_NOT_FOUND: 'That freelancer does not exist.',
+  CONTRACT_NOT_FOUND: 'That contract does not exist.',
+  INVALID_STATUS_TRANSITION: 'This contract cannot move to that status.',
+  CONCURRENT_UPDATE: 'This record changed during your request. Please try again.',
+};
+
+function displayMessage(status, code) {
+  if (status >= 500 || code === 'NETWORK' || code === 'DATABASE_UNAVAILABLE') {
+    return 'The service is temporarily unavailable. Please try again.';
+  }
+  return USER_MESSAGES[code] || 'The request could not be completed. Please try again.';
+}
 
 export class ApiError extends Error {
   constructor(status, code, message, details) {
-    super(message);
+    super(displayMessage(status, code));
     this.status = status;
     this.code = code;
     this.details = details;
+    this.serverMessage = message;
   }
 }
 

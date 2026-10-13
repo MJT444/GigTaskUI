@@ -1,5 +1,5 @@
 // Detail view per record: client, freelancer, contract.
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client.js';
 import { ContractStatusControl } from '../components/ContractStatusControl.jsx';
@@ -10,11 +10,17 @@ import { Button, Card, DetailList, Money, PageHeader, StatCard } from '../compon
 import { useActor } from '../context/ActorContext.jsx';
 import { formatDateTime, formatInt } from '../lib/format.js';
 
-const BackLink = ({ tab }) => (
-  <Link className="back-link" to={`/browse?tab=${tab}`}>
-    ← Back to {tab}
-  </Link>
-);
+function BackLink({ tab }) {
+  const { state } = useLocation();
+  const search = state?.browseSearch;
+  const params = new URLSearchParams(search || '');
+  if (!params.has('tab')) params.set('tab', tab);
+  return (
+    <Link className="back-link" to={`/browse?${params}`}>
+      ← Back to {tab}
+    </Link>
+  );
+}
 
 export function ClientDetailPage() {
   const { id } = useParams();
@@ -152,7 +158,7 @@ export function ContractDetailPage() {
                 ]}
               />
             </Card>
-            <Card title="Status" subtitle="Statuses only move forward; one gig in progress per freelancer (idx_active_gig)">
+            <Card title="Status" subtitle="A freelancer can work on one gig at a time">
               <ContractStatusControl contract={k} />
             </Card>
           </div>

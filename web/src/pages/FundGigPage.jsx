@@ -27,14 +27,16 @@ export function FundGigPage() {
   const [startNow, setStartNow] = useState(true);
   const [result, setResult] = useState(null);
 
-  // ?freelancer=<id> from a freelancer page pre-fills the picker
+  // ?freelancer=<id> from a freelancer page pre-fills the picker. Keep the
+  // selected worker's live status in Query so funding/status changes refresh it.
   const preset = params.get('freelancer');
-  const presetQ = useQuery({
-    queryKey: ['freelancers', 'detail', preset],
-    queryFn: () => api.get(`/api/freelancers/${preset}`),
-    enabled: Boolean(preset) && !freelancer,
+  const chosenId = freelancer?.id || preset;
+  const freelancerQ = useQuery({
+    queryKey: ['freelancers', 'detail', chosenId],
+    queryFn: () => api.get(`/api/freelancers/${chosenId}`),
+    enabled: Boolean(chosenId),
   });
-  const chosen = freelancer || presetQ.data || null;
+  const chosen = freelancerQ.data || freelancer || null;
 
   const clientQ = useQuery({
     queryKey: ['clients', 'detail', actor?.id],
@@ -54,7 +56,7 @@ export function FundGigPage() {
     onError: (error) => setResult({ kind: 'error', error, at: Date.now() }),
   });
 
-  const amountValid = AMOUNT_RE.test(budget) && Number(budget) <= MAX_AMOUNT;
+  const amountValid = AMOUNT_RE.test(budget) && Number(budget) > 0 && Number(budget) <= MAX_AMOUNT;
   const canSubmit = actor && chosen?.id && amountValid && !fund.isPending;
 
   const submit = (e) => {
@@ -82,7 +84,7 @@ export function FundGigPage() {
     <>
       <PageHeader
         title="Fund a gig"
-        description="Calls the stored procedure fund_gig inside a REPEATABLE READ transaction. The database enforces every rule."
+        description="Choose a freelancer and fund a new gig from this client’s escrow balance."
       />
 
       <div className="grid-checkout">
@@ -107,7 +109,7 @@ export function FundGigPage() {
             <Field
               label="Budget (₹)"
               htmlFor="fund-budget"
-              hint={budget && !amountValid ? 'Use a number with at most 2 decimals, up to 99,999,999.99.' : 'Moved from escrow into the contract.'}
+              hint={budget && !amountValid ? 'Use a number greater than zero with at most 2 decimals, up to 99,999,999.99.' : 'Moved from escrow into the contract.'}
             >
               <input
                 id="fund-budget"
@@ -143,8 +145,7 @@ export function FundGigPage() {
               <span>
                 <strong>Start work now</strong>
                 <span className="muted">
-                  Also moves the contract to IN_PROGRESS in the same transaction. If this freelancer already has a gig in
-                  progress, the partial unique index refuses and nothing is charged.
+                  Start this gig immediately. If the freelancer is busy, you can fund it for later instead.
                 </span>
               </span>
             </label>
@@ -155,7 +156,7 @@ export function FundGigPage() {
           </form>
         </Card>
 
-        <Card title="Escrow right now" subtitle="clients.escrow_balance">
+        <Card title="Escrow right now" subtitle="Available to fund gigs">
           {clientQ.isPending && <Loading />}
           {clientQ.isError && <ErrorState error={clientQ.error} onRetry={() => clientQ.refetch()} />}
           {client && (
@@ -209,7 +210,7 @@ function FundSuccess({ data }) {
       </div>
 
       <div className="grid-2">
-        <Card title="New contract" subtitle={`Inserted by fund_gig · ${shortId(contract?.id)}`}>
+        <Card title="New contract" subtitle={`Reference ${shortId(contract?.id)}`}>
           {contract && (
             <>
               <DetailList
@@ -224,19 +225,19 @@ function FundSuccess({ data }) {
           )}
         </Card>
 
-        <Card title="New wallet_audit_logs row" subtitle="Written by trigger trg_wallet_audit — the API never inserts audit rows">
+        <Card title="Escrow activity" subtitle="Funding transaction">
           {data.auditEntry ? (
             <DetailList
               items={[
-                ['id', <code key="i">{data.auditEntry.id}</code>],
-                ['action_type', <span key="t" className="badge badge-debit">{data.auditEntry.action_type}</span>],
-                ['amount_changed', <Money key="m" value={data.auditEntry.amount_changed} signed />],
-                ['balance_after', <Money key="b" value={data.auditEntry.balance_after} />],
-                ['created_at', formatDateTime(data.auditEntry.created_at)],
+                ['Reference', <code key="i">{data.auditEntry.id}</code>],
+                ['Type', <span key="t" className="badge badge-debit">{data.auditEntry.action_type}</span>],
+                ['Amount', <Money key="m" value={data.auditEntry.amount_changed} signed />],
+                ['Balance after', <Money key="b" value={data.auditEntry.balance_after} />],
+                ['Recorded', formatDateTime(data.auditEntry.created_at)],
               ]}
             />
           ) : (
-            <Alert tone="danger">No audit row was found for this transaction — the trigger did not fire.</Alert>
+            <Alert tone="danger">We could not confirm the escrow activity. Check the account history before trying again.</Alert>
           )}
           <Link to="/escrow" className="btn btn-secondary btn-sm">
             Open the escrow audit trail
@@ -273,14 +274,11 @@ function FundFailure({ error, actor, onFixed }) {
             ['Short by', <span key="s" className="money money-neg">{formatMoney(shortfall)}</span>],
           ]}
         />
-        <p className="muted">
-          Raised by <code>fund_gig</code> after it locked the client row (<code>FOR UPDATE</code>). The transaction was rolled
-          back: no contract and no audit row exist.
-        </p>
+        <p className="muted">No gig was created and nothing was charged.</p>
         {canTopUp ? (
           <div>
             <Button variant="secondary" loading={topUp.isPending} onClick={() => topUp.mutate(topUpAmount)}>
-              Top up {formatMoney(topUpAmount)} (writes a CREDIT audit row)
+              Top up {formatMoney(topUpAmount)}
             </Button>
           </div>
         ) : (
@@ -303,9 +301,7 @@ function FundFailure({ error, actor, onFixed }) {
         <h2>This freelancer already has a gig in progress</h2>
         <p>{error.message} Nothing was charged.</p>
         <p className="muted">
-          Refused by the partial unique index <code>idx_active_gig</code> on{' '}
-          <code>contracts(freelancer_id) WHERE status = &apos;IN_PROGRESS&apos;</code>. The escrow debit made earlier in the
-          same transaction was rolled back. Untick “Start work now” to fund the gig anyway and start it later.
+          Turn off “Start work now” to fund this gig for later, or complete the current gig below and try again.
         </p>
         {active && <BlockingContract contract={active} onCleared={onFixed} />}
       </section>
@@ -316,7 +312,6 @@ function FundFailure({ error, actor, onFixed }) {
     <section className="result result-error" role="alert">
       <h2>The gig was not funded</h2>
       <p>{error.message}</p>
-      {error.code && <p className="muted">Code: {error.code}</p>}
     </section>
   );
 }

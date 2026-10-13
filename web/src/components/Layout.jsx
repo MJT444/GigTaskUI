@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useActor } from '../context/ActorContext.jsx';
 import { ClientSearch } from './pickers.jsx';
 
@@ -12,38 +11,6 @@ const NAV = [
   { to: '/workers', label: 'Workers map', db: 'mongo' },
   { to: '/reviews', label: 'Reviews', db: 'mongo' },
 ];
-
-function HealthDots() {
-  // Raw fetch on purpose: a 503 still carries per-database status in its body.
-  const q = useQuery({
-    queryKey: ['health'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('/api/health');
-        if (res.status === 502 || res.status === 504) return { api: false }; // Vite proxy: API down
-        return { api: true, ...(await res.json()) };
-      } catch {
-        return { api: false };
-      }
-    },
-    refetchInterval: 15_000,
-    retry: false,
-  });
-  const d = q.data;
-  const dot = (ok, label) => (
-    <span className={`health-dot ${ok === undefined ? '' : ok ? 'ok' : 'down'}`} title={`${label}: ${ok ? 'up' : 'down'}`}>
-      {label}
-    </span>
-  );
-  if (!d) return <span className="health">{dot(undefined, 'API')}</span>;
-  if (d.api === false) return <span className="health">{dot(false, 'API')}</span>;
-  return (
-    <span className="health" aria-label="Database status">
-      {dot(d.postgres?.ok, 'PostgreSQL')}
-      {dot(d.mongo?.ok, 'MongoDB')}
-    </span>
-  );
-}
 
 export function Layout() {
   const { actor, setActor } = useActor();
@@ -86,7 +53,6 @@ export function Layout() {
           </nav>
 
           <div className="topbar-right">
-            <HealthDots />
             <div className="acting-as">
               <span className="acting-label">Acting as client</span>
               <ClientSearch value={actor} onSelect={setActor} compact />
