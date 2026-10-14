@@ -3,6 +3,8 @@
 #   powershell -ExecutionPolicy Bypass -File scripts\start.ps1
 #
 # Opens two PowerShell windows (API on :4000, web on :5173) and the browser.
+# Uses npm.cmd, not npm: the new windows run with the normal execution policy,
+# which blocks npm.ps1 on many Windows machines.
 # Run scripts\setup.ps1 once before the first start.
 
 # 'Continue': in Windows PowerShell 5.1, 'Stop' turns any stderr output from
@@ -25,15 +27,15 @@ foreach ($dir in 'api', 'web') {
     if (-not (Test-Path "$root\$dir\node_modules")) {
         Write-Host "Installing $dir packages (first run only)..." -ForegroundColor Yellow
         Push-Location "$root\$dir"
-        npm install
+        npm.cmd install
         if ($LASTEXITCODE -ne 0) { Pop-Location; Fail "npm install in $dir failed." }
         Pop-Location
     }
 }
 if (-not (Test-Path "$root\api\.env")) { Copy-Item "$root\api\.env.example" "$root\api\.env" }
 
-Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$root\api'; `$host.UI.RawUI.WindowTitle='GigTask API'; npm start"
-Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$root\web'; `$host.UI.RawUI.WindowTitle='GigTask web'; npm run dev"
+Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$root\api'; `$host.UI.RawUI.WindowTitle='GigTask API'; npm.cmd start"
+Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$root\web'; `$host.UI.RawUI.WindowTitle='GigTask web'; npm.cmd run dev"
 
 Write-Host 'Waiting for the web app...'
 for ($i = 0; $i -lt 60; $i++) {
