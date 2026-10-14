@@ -62,7 +62,7 @@ export function ReviewsPage() {
     <>
       <PageHeader
         title="Reviews & portfolios"
-        description="MongoDB GigReviews ($facet: rating distribution, top skill tags, average and top workers in one pass) and the flexible Portfolios catalog."
+        description="What clients say about freelancers: ratings, most-mentioned skills and the top-rated workers, with each freelancer’s portfolio."
       />
 
       <Card>
@@ -86,24 +86,24 @@ export function ReviewsPage() {
         <p className="field-hint">
           {freelancerId ? (
             <>
-              Showing <Link to={`/freelancers/${freelancerId}`}>{who?.name || 'this freelancer'}</Link> only — the $match adds{' '}
-              <code>freelancer_id</code>.
+              Showing reviews for <Link to={`/freelancers/${freelancerId}`}>{who?.name || 'this freelancer'}</Link> only.
             </>
           ) : (
-            'All freelancers, last 90 days by default — exactly the Part A analysis.'
+            'All freelancers. Pick a period, click a rating bar to filter the reviews, or click a top-rated worker.'
           )}
         </p>
       </Card>
 
       <QueryState
         query={summary}
-        loadingLabel="Running $facet…"
+        loadingLabel="Loading reviews…"
         isEmpty={(d) => d.totalReviews === 0}
         emptyTitle="No reviews in this period"
-        empty="The $facet ran and every facet came back empty. Try a longer period."
+        empty="Try a longer period."
       >
         {(d) => {
-          const positive = d.ratingDistribution.filter((r) => r.rating >= 4).reduce((s, r) => s + r.count, 0);
+          const share = (keep) =>
+            `${Math.round((d.ratingDistribution.filter((r) => keep(r.rating)).reduce((s, r) => s + r.count, 0) / d.totalReviews) * 100)}%`;
           return (
             <div className={summary.isPlaceholderData ? 'is-dimmed' : ''}>
               <div className="stats-grid">
@@ -114,15 +114,14 @@ export function ReviewsPage() {
                       {Number(d.averageRating).toFixed(2)} <Stars value={d.averageRating} />
                     </span>
                   }
-                  hint="overallAverage facet ($avg, $round 2)"
                 />
                 <StatCard label="Reviews" value={formatInt(d.totalReviews)} />
-                <StatCard label="4–5 stars" value={`${Math.round((positive / d.totalReviews) * 100)}%`} />
-                <StatCard label="Pipeline time" value={`${d.queryMs} ms`} hint="one $match + $facet" />
+                <StatCard label="4–5 stars" value={share((r) => r >= 4)} />
+                <StatCard label="1–2 stars" value={share((r) => r <= 2)} />
               </div>
 
               <div className="grid-2">
-                <Card title="Rating distribution" subtitle="ratingDistribution facet · click a bar to filter the reviews below">
+                <Card title="Rating distribution" subtitle="Click a bar to see only those reviews">
                   <div className="chart" role="img" aria-label="Number of reviews per star rating">
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={d.ratingDistribution} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
@@ -153,7 +152,7 @@ export function ReviewsPage() {
                   </div>
                 </Card>
 
-                <Card title="Top skill tags" subtitle="topSkillTags facet · $unwind skill_tags, top 10">
+                <Card title="Top skill tags" subtitle="Skills mentioned most in reviews">
                   {d.topTags.length === 0 ? (
                     <EmptyState title="No tags" />
                   ) : (
@@ -174,17 +173,17 @@ export function ReviewsPage() {
               </div>
 
               {!freelancerId && (
-                <Card title="Top-rated workers" subtitle="overallWorkerRatings facet · highest average, then most reviews · click to drill in">
+                <Card title="Top-rated workers" subtitle="Highest average rating · click a name to see their reviews and portfolio">
                   <ol className="top-workers">
                     {d.topWorkers.map((w, i) => (
                       <li key={w.freelancerId} className="top-worker">
-                        <span className="driver-rank">{i + 1}</span>
+                        <span className="list-rank">{i + 1}</span>
                         <button type="button" onClick={() => choose(w.freelancerId)}>
                           {w.name}
                         </button>
                         <Stars value={w.avgRating} />
-                        <span className="muted">
-                          {Number(w.avgRating).toFixed(2)} · {w.reviewCount} reviews
+                        <span className="muted top-worker-score">
+                          {Number(w.avgRating).toFixed(2)} · {formatInt(w.reviewCount)} reviews
                         </span>
                       </li>
                     ))}
@@ -193,13 +192,14 @@ export function ReviewsPage() {
               )}
 
               <details className="explain">
-                <summary>How one $facet produces all of this</summary>
+                <summary>How this works</summary>
                 <p>
                   <code>$match</code> on <code>created_at</code> (index <code>created_at_1</code>) — plus <code>freelancer_id</code> when
                   one freelancer is chosen — runs once. <code>$facet</code> then feeds the same documents into four sub-pipelines:{' '}
                   <code>ratingDistribution</code> (<code>$group</code> by rating), <code>topSkillTags</code> (<code>$unwind</code> the
                   tag array, <code>$group</code>, <code>$sort</code>, <code>$limit 10</code>), <code>overallAverage</code> (added: the
-                  brief asks for it) and <code>overallWorkerRatings</code>. The result is one document with four arrays.
+                  brief asks for it) and <code>overallWorkerRatings</code>. The result is one document with four arrays. Last
+                  run: {d.queryMs} ms.
                 </p>
               </details>
             </div>
@@ -212,7 +212,7 @@ export function ReviewsPage() {
         {freelancerId ? (
           <PortfolioCard freelancerId={freelancerId} />
         ) : (
-          <Card title="Portfolio" subtitle="MongoDB Portfolios — flexible catalog document">
+          <Card title="Portfolio" subtitle="Skills, experience and certifications">
             <EmptyState title="Pick a freelancer to see their portfolio">Click a name in “Top-rated workers” or use the search above.</EmptyState>
           </Card>
         )}
