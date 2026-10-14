@@ -54,7 +54,7 @@ function ClickToPick({ onPick }) {
  */
 export function WorkerMap({ origin, results, newIds, highlightId, onHighlight, onPick }) {
   return (
-    <MapContainer center={[origin.lat, origin.lng]} zoom={13} scrollWheelZoom className="driver-map" aria-label="Map of nearby workers">
+    <MapContainer center={[origin.lat, origin.lng]} zoom={13} scrollWheelZoom className="worker-map" aria-label="Map of nearby workers">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

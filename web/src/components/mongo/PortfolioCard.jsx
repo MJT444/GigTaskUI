@@ -29,8 +29,8 @@ export function PortfolioCard({ freelancerId }) {
   });
 
   return (
-    <Card title="Portfolio" subtitle="MongoDB Portfolios — a flexible document; optional fields vary per freelancer">
-      <QueryState query={q} isEmpty={(d) => !d.portfolio} emptyTitle="No portfolio document for this freelancer">
+    <Card title="Portfolio" subtitle="Skills, experience and certifications">
+      <QueryState query={q} isEmpty={(d) => !d.portfolio} emptyTitle="This freelancer has no portfolio yet">
         {(d) => {
           const p = d.portfolio;
           const facts = [];
@@ -47,7 +47,7 @@ export function PortfolioCard({ freelancerId }) {
                     </span>
                   ))}
                 </div>
-                <div className="field-presence" aria-label="Optional fields on this document">
+                <div className="field-presence" aria-label="Profile details filled in">
                   {d.presentOptionalFields.map((k) => (
                     <span key={k} className="present">✓ {FIELD_LABELS[k]}</span>
                   ))}
@@ -76,15 +76,21 @@ export function PortfolioCard({ freelancerId }) {
                 </div>
               )}
 
-              <div className="menu-footer">
-                <span className="muted">
-                  Document <code>{String(p._id)}</code> · freelancer_id = PostgreSQL <code>freelancers.id</code>
-                </span>
+              <div className="portfolio-footer">
+                <span className="muted">Profiles differ: each one stores only the details the freelancer added.</span>
                 <Button variant="ghost" size="sm" onClick={() => setShowRaw((s) => !s)} aria-expanded={showRaw}>
-                  {showRaw ? 'Hide' : 'Show'} raw document
+                  {showRaw ? 'Hide' : 'Show'} stored document
                 </Button>
               </div>
-              {showRaw && <pre className="raw-json">{JSON.stringify(p, null, 2)}</pre>}
+              {showRaw && (
+                <>
+                  <p className="muted">
+                    MongoDB <code>Portfolios</code> document <code>{String(p._id)}</code>; <code>freelancer_id</code> = PostgreSQL{' '}
+                    <code>freelancers.id</code>.
+                  </p>
+                  <pre className="raw-json">{JSON.stringify(p, null, 2)}</pre>
+                </>
+              )}
             </div>
           );
         }}

@@ -100,7 +100,7 @@ export function WorkersMapPage() {
     <>
       <PageHeader
         title="Workers near a job site"
-        description="MongoDB WorkerLocations · $geoNear on the 2dsphere index · available workers within 5 km, nearest first."
+        description="Available workers within 5 km of the job site, nearest first. The map updates on its own as workers send their location."
       />
 
       <Card>
@@ -126,14 +126,14 @@ export function WorkersMapPage() {
               value={mode}
               onChange={setMode}
               tabs={[
-                { value: 'workers', label: 'Workers (latest ping each)' },
-                { value: 'pings', label: 'Raw pings (Part A, top 5)' },
+                { value: 'workers', label: 'Workers' },
+                { value: 'pings', label: 'Latest pings (5 nearest)' },
               ]}
             />
           </Field>
           <Field label="Ping age" htmlFor="workers-age">
             <select id="workers-age" className="input" value={maxAge} onChange={(e) => setMaxAge(e.target.value)} disabled={mode === 'pings'}>
-              <option value="">Any (TTL keeps ≤ 2 h)</option>
+              <option value="">Any (last 2 hours)</option>
               <option value="15">Last 15 minutes</option>
               <option value="60">Last hour</option>
             </select>
@@ -156,7 +156,7 @@ export function WorkersMapPage() {
         {simulate.isError && <Alert tone="danger">{simulate.error.message}</Alert>}
       </Card>
 
-      {nearby.isPending && <Loading label="Running $geoNear…" />}
+      {nearby.isPending && <Loading label="Finding nearby workers…" />}
       {nearby.isError && !nearby.data && <ErrorState error={nearby.error} onRetry={() => nearby.refetch()} />}
 
       {nearby.data && origin && (
@@ -168,8 +168,7 @@ export function WorkersMapPage() {
           )}
           <div className="live-bar" aria-live="polite">
             <span className={`live-dot ${live ? 'is-live' : ''}`} aria-hidden="true" />
-            {live ? 'Live' : 'Paused'} · updated {formatAge(sinceFetch)} · {rows.length} {mode === 'workers' ? 'workers' : 'pings'} · query{' '}
-            {nearby.data.queryMs} ms
+            {live ? 'Live' : 'Paused'} · updated {formatAge(sinceFetch)} · {rows.length} {mode === 'workers' ? 'workers' : 'pings'}
             {newIds.size > 0 && <Badge tone="success">{newIds.size} new</Badge>}
             {nearby.isFetching && <span className="spinner spinner-inline" aria-label="Updating" />}
           </div>
@@ -205,20 +204,21 @@ export function WorkersMapPage() {
             <Card title="Nearest first" subtitle={`${origin.label} · ${origin.lat.toFixed(4)}, ${origin.lng.toFixed(4)}`} className="results-card">
               {rows.length === 0 ? (
                 <EmptyState title="No available workers within 5 km">
-                  Seeded pings expire 2 hours after seeding (TTL index). Press “Add fresh pings” or turn on auto-add.
+                  Locations older than 2 hours are removed automatically. Press “Add fresh pings” to simulate workers sending
+                  their location, or turn on auto-add.
                 </EmptyState>
               ) : (
-                <ol className="driver-list">
+                <ol className="worker-list">
                   {rows.map((r, i) => (
                     <li
                       key={r.pingId}
-                      className={`driver-item ${r.pingId === highlightId ? 'is-highlighted' : ''} ${newIds.has(r.pingId) ? 'is-new' : ''}`}
+                      className={`worker-item ${r.pingId === highlightId ? 'is-highlighted' : ''} ${newIds.has(r.pingId) ? 'is-new' : ''}`}
                       onMouseEnter={() => setHighlightId(r.pingId)}
                       onMouseLeave={() => setHighlightId(null)}
                     >
-                      <span className="driver-rank">{i + 1}</span>
+                      <span className="list-rank">{i + 1}</span>
                       <span className="legend-dot" style={{ background: colorForAge(r.age) }} aria-hidden="true" />
-                      <span className="driver-main">
+                      <span className="worker-main">
                         <Link to={`/freelancers/${r.freelancerId}`}>{r.name}</Link>
                         <span className="muted">
                           {formatAge(r.age)}
@@ -226,7 +226,7 @@ export function WorkersMapPage() {
                           {r.busy && ' · gig in progress'}
                         </span>
                       </span>
-                      <span className="driver-distance">{r.distanceKm.toFixed(2)} km</span>
+                      <span className="worker-distance">{r.distanceKm.toFixed(2)} km</span>
                     </li>
                   ))}
                 </ol>
@@ -236,45 +236,50 @@ export function WorkersMapPage() {
         </>
       )}
 
-      <div className="grid-2">
-        <Card title="WorkerLocations collection" subtitle="Why the data changes on its own">
-          {stats.isPending && <Loading />}
-          {stats.isError && <ErrorState error={stats.error} onRetry={() => stats.refetch()} />}
-          {stats.data && (
-            <>
-              <div className="stats-grid stats-grid-2">
-                <StatCard label="Pings stored" value={formatInt(stats.data.totalPings)} hint="estimated count" />
-                <StatCard label="Available pings" value={formatInt(stats.data.availablePings)} />
-                <StatCard label="Newest ping" value={formatDateTime(stats.data.newestPingAt)} />
-                <StatCard label="Oldest ping" value={formatDateTime(stats.data.oldestPingAt)} />
-              </div>
-              <p className="muted">
-                TTL index on <code>created_at</code> deletes pings {stats.data.ttlSeconds ? `${stats.data.ttlSeconds / 3600} h` : '—'} after
-                they were created. The seeder gives all 500,000 pings the same <code>created_at</code>, so they all disappear together.
-                MongoDB’s TTL monitor runs about once a minute.
-              </p>
-            </>
-          )}
-        </Card>
-        <Card title="What runs on the server">
-          <ol className="explain-list">
-            <li>
-              <code>$geoNear</code> (must be the first stage) walks the <code>2dsphere</code> index outward from the job site, keeps{' '}
-              <code>is_available: true</code> pings within <code>maxDistance: 5000</code> m and adds <code>distance_meters</code>.
-              Part A had no <code>maxDistance</code>; we added it.
-            </li>
-            <li>
-              <strong>Raw pings</strong> = the Part A pipeline: <code>$limit 5</code>, <code>$project</code>. Each worker has ~250
-              pings, so one worker can fill several places.
-            </li>
-            <li>
-              <strong>Workers</strong> adds <code>$sort</code> newest-first, <code>$group</code> by <code>freelancer_id</code> with{' '}
-              <code>$first</code> (= latest ping), then sorts by distance again because <code>$group</code> loses order.
-            </li>
-            <li>Names and “gig in progress” come from PostgreSQL in one query, joined on <code>freelancer_id</code>.</li>
-          </ol>
-        </Card>
-      </div>
+      <Card title="Location updates" subtitle="Each worker’s phone reports where they are">
+        {stats.isPending && <Loading />}
+        {stats.isError && <ErrorState error={stats.error} onRetry={() => stats.refetch()} />}
+        {stats.data && (
+          <>
+            <div className="stats-grid">
+              <StatCard label="Locations stored" value={formatInt(stats.data.totalPings)} hint="approximate" />
+              <StatCard label="Available" value={formatInt(stats.data.availablePings)} hint="locations from available workers" />
+              <StatCard label="Newest location" value={formatDateTime(stats.data.newestPingAt)} />
+              <StatCard label="Oldest location" value={formatDateTime(stats.data.oldestPingAt)} />
+            </div>
+            <p className="muted">
+              Locations are kept for {stats.data.ttlSeconds ? `${stats.data.ttlSeconds / 3600} hours` : 'a limited time'} and then
+              removed automatically, so the map only shows where workers are now.
+            </p>
+          </>
+        )}
+      </Card>
+
+      <details className="explain">
+        <summary>How this works</summary>
+        <ol className="explain-list">
+          <li>
+            <code>$geoNear</code> (must be the first stage) walks the <code>2dsphere</code> index of <code>WorkerLocations</code>{' '}
+            outward from the job site, keeps <code>is_available: true</code> pings within <code>maxDistance: 5000</code> m and adds{' '}
+            <code>distance_meters</code>. Part A had no <code>maxDistance</code>; we added it.
+          </li>
+          <li>
+            <strong>Latest pings</strong> = the Part A pipeline: <code>$limit 5</code>, <code>$project</code>. Each worker has ~250
+            pings, so one worker can fill several places.
+          </li>
+          <li>
+            <strong>Workers</strong> adds <code>$sort</code> newest-first, <code>$group</code> by <code>freelancer_id</code> with{' '}
+            <code>$first</code> (= latest ping), then sorts by distance again because <code>$group</code> loses order.
+          </li>
+          <li>Names and “gig in progress” come from PostgreSQL in one query, joined on <code>freelancer_id</code>.</li>
+          <li>
+            A TTL index on <code>created_at</code> deletes pings after 2 hours. The seeder gives every ping the same{' '}
+            <code>created_at</code>, so all seeded pings disappear together; “Add fresh pings” inserts new ones with the same
+            document shape.
+          </li>
+          {nearby.data && <li>Last query: {nearby.data.queryMs} ms.</li>}
+        </ol>
+      </details>
     </>
   );
 }

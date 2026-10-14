@@ -54,7 +54,7 @@ Each of the 2,000 freelancers has ~250 pings within ±0.05° (~5 km) of their ba
 
 ### Pipeline, stage by stage
 
-**Raw pings** (toggle) = Part A + the 5 km limit:
+**Latest pings (5 nearest)** (toggle) = Part A + the 5 km limit:
 
 | Stage | Why |
 |---|---|
@@ -140,10 +140,16 @@ freelancer (default “all time”: ~10 reviews per freelancer per year).
 
 Optional fields differ per document — the reason it lives in MongoDB (in SQL: nullable columns plus a
 certifications table). `PortfolioCard` renders only what exists, lists present (✓) and missing (struck-through)
-optional fields, and shows the raw document on request. The API looks it up with
+optional fields, and shows the stored document on request (**Show stored document**). The API looks it up with
 `findOne({ freelancer_id })`. Portfolios has only the `_id` index, so this scans 2,000 small documents — a few milliseconds, so no index was added to the inherited database.
 
-## 5. Errors and empty states
+## 5. Wording on screen
+
+The screens use plain language, like the PostgreSQL screens (“Workers”, “Location updates”, “Show stored document”).
+The database detail — `$geoNear`, `$facet`, indexes, TTL, query time — is kept in a collapsed **How this works**
+section at the bottom of each MongoDB screen, so it is there for the demo and the viva without getting in a user's way.
+
+## 6. Errors and empty states
 
 | Situation | User sees |
 |---|---|
@@ -153,7 +159,7 @@ optional fields, and shows the raw document on request. The API looks it up with
 | no reviews in the period | empty state suggesting a longer period |
 | freelancer without a portfolio | empty state in the portfolio card |
 
-## 6. Check it yourself (mongosh)
+## 7. Check it yourself (mongosh)
 
 ```js
 // Docker: docker compose exec mongo mongosh gigtask
@@ -163,7 +169,7 @@ db.GigReviews.countDocuments({ created_at: { $gte: new Date(Date.now() - 90*8640
 db.Portfolios.findOne({ certifications: { $exists: false } })                               // a sparse one
 ```
 
-## 7. Likely viva questions
+## 8. Likely viva questions
 
 **Why must `$geoNear` be first?** Only the first stage can use the geospatial index; it also produces the distance and the nearest-first order.
 

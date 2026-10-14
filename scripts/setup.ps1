@@ -60,6 +60,23 @@ for ($i = 0; $i -lt 60; $i++) {
 }
 if (-not $ready) { Fail 'Databases did not start within 2 minutes. Check: docker compose logs' }
 
+# The seeders and the API connect from Windows through the published ports, so
+# check those too (Docker Desktop's port forwarding can lag behind the container).
+function Test-HostPort([int]$port) {
+    $c = New-Object System.Net.Sockets.TcpClient
+    try { $c.Connect('127.0.0.1', $port); return $true } catch { return $false } finally { $c.Close() }
+}
+$hostOk = $false
+for ($i = 0; $i -lt 15; $i++) {
+    if ((Test-HostPort 5433) -and (Test-HostPort 27018)) { $hostOk = $true; break }
+    Start-Sleep -Seconds 2
+}
+if (-not $hostOk) {
+    Fail ("The databases run, but Windows cannot reach localhost:5433 / 27018.`n" +
+          "   Docker Desktop's port forwarding is stuck (common after stopping other containers on the same ports).`n" +
+          "   Fix: docker compose down   then restart Docker Desktop (tray icon > Restart), then re-run this script.")
+}
+
 function Psql([string]$sql) {
     $out = docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -q -At -U postgres -d gigtask -c $sql
     Check "SQL: $sql"

@@ -78,15 +78,16 @@ the inherited `refresh_freelancer_lifetime_stats()` (the view is empty until the
 ```bash
 cd api && npm test                   # unit: pipelines, error mapping, validation, geometry
 cd api && npm run test:integration   # end-to-end; needs the API running and seeded databases
-cd web && npm test                   # Fund-gig form: success, both DB failures, validation
+cd web && npm test                   # Fund-gig form, Explore, Workers map
 ```
 
 ### Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Red “API” dot | API not running: `cd api && npm start` |
-| Red “MongoDB” dot; map and reviews fail, other screens work | `docker compose up -d` |
+| Every screen shows “Could not load this” | API not running: `cd api && npm start` |
+| Only Workers map and Reviews show “Could not load this” | MongoDB is down: `docker compose up -d` |
+| Setup: “Windows cannot reach localhost:5433 / 27018” | `docker compose down`, restart Docker Desktop, run setup again |
 | Map: “No available workers within 5 km” | Seeded pings expire 2 h after seeding (TTL). Press **Add fresh pings** or turn on **Auto-add**. |
 | Map tiles grey | Tiles come from openstreetmap.org — needs internet |
 | Setup: ports 5433/27018 used by other containers | `docker stop <container names it prints>` |
@@ -118,8 +119,8 @@ Every screen has loading, empty and error states. Technical errors stay in API r
 4. **More than escrow** → shortfall → **Top up** → CREDIT row.
 5. **Escrow**: new rows on top match the trigger ✓ (seeded history explained); *Last 30 days*.
 6. **Analytics**: “N completed contracts are not in the view” → **Refresh** → time updates. Click a row in the DENSE_RANK table → that freelancer's chart.
-7. **Workers map**: **Auto-add pings** on; dots appear and pulse; change job site; *Raw pings (Part A)* vs *Workers*; click the map.
-8. **Reviews**: click the 1★ bar; click a top worker → their facet + portfolio; **Show raw document**.
+7. **Workers map**: **Auto-add pings** on; dots appear and pulse; change job site; *Latest pings (5 nearest)* (the Part A pipeline) vs *Workers*; click the map; open **How this works**.
+8. **Reviews**: click the 1★ bar; click a top worker → their reviews + portfolio; **Show stored document**; open **How this works**.
 
 ## 4. Technology choices
 
