@@ -78,15 +78,16 @@ the inherited `refresh_freelancer_lifetime_stats()` (the view is empty until the
 ```bash
 cd api && npm test                   # unit: pipelines, error mapping, validation, geometry
 cd api && npm run test:integration   # end-to-end; needs the API running and seeded databases
-cd web && npm test                   # Fund-gig form: success, both DB failures, validation
+cd web && npm test                   # Fund-gig form, Explore, Workers map
 ```
 
 ### Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Red “API” dot | API not running: `cd api && npm start` |
-| Red “MongoDB” dot; map and reviews fail, other screens work | `docker compose up -d` |
+| Every screen shows “Could not load this” | API not running: `cd api && npm start` |
+| Only Workers map and Reviews show “Could not load this” | MongoDB is down: `docker compose up -d` |
+| Setup: “Windows cannot reach localhost:5433 / 27018” | `docker compose down`, restart Docker Desktop, run setup again |
 | Map: “No available workers within 5 km” | Seeded pings expire 2 h after seeding (TTL). Press **Add fresh pings** or turn on **Auto-add**. |
 | Map tiles grey | Tiles come from openstreetmap.org — needs internet |
 | Setup: ports 5433/27018 used by other containers | `docker stop <container names it prints>` |
