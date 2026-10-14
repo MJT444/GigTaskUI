@@ -119,8 +119,8 @@ Every screen has loading, empty and error states. Technical errors stay in API r
 4. **More than escrow** → shortfall → **Top up** → CREDIT row.
 5. **Escrow**: new rows on top match the trigger ✓ (seeded history explained); *Last 30 days*.
 6. **Analytics**: “N completed contracts are not in the view” → **Refresh** → time updates. Click a row in the DENSE_RANK table → that freelancer's chart.
-7. **Workers map**: **Auto-add pings** on; dots appear and pulse; change job site; *Raw pings (Part A)* vs *Workers*; click the map.
-8. **Reviews**: click the 1★ bar; click a top worker → their facet + portfolio; **Show raw document**.
+7. **Workers map**: **Auto-add pings** on; dots appear and pulse; change job site; *Latest pings (5 nearest)* (the Part A pipeline) vs *Workers*; click the map; open **How this works**.
+8. **Reviews**: click the 1★ bar; click a top worker → their reviews + portfolio; **Show stored document**; open **How this works**.
 
 ## 4. Technology choices
 
