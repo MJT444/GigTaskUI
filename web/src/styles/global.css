@@ -373,13 +373,13 @@ select.input {
 .chart .recharts-text { fill: var(--muted); }
 .top-list ol { margin: 6px 0 0; padding-left: 20px; font-size: 0.9rem; }
 
-/* ---------- Drivers map ---------- */
+/* ---------- Workers map (MongoDB) ---------- */
 
 .map-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--gap); align-items: stretch; }
 .map-panel { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.driver-map {
+.worker-map {
   height: 520px; width: 100%; border-radius: var(--radius); border: 1px solid var(--border);
-  z-index: 0; /* keep Leaflet panes under the sticky header */
+  z-index: 0; /* own stacking context: Leaflet panes and zoom buttons stay under the sticky header */
 }
 .map-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
 .map-legend span { display: inline-flex; align-items: center; gap: 5px; }
@@ -387,18 +387,20 @@ select.input {
 .legend-origin { background: var(--accent); width: 13px; height: 13px; }
 .legend-ring { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--accent); }
 
-.results-card { max-height: 590px; }
-.driver-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
-.driver-item {
+.results-card { max-height: 590px; } /* the list below scrolls inside the card (min-height: 0) */
+.worker-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; }
+.worker-item {
   display: grid; grid-template-columns: 22px 12px minmax(0, 1fr) auto; align-items: center; gap: 8px;
   padding: 8px 6px; border-bottom: 1px solid var(--border); border-radius: var(--radius-sm);
 }
-.driver-item.is-highlighted { background: var(--accent-soft); }
-.driver-item.is-new { animation: flash 1.6s ease-out; }
-.driver-rank { font-size: 0.78rem; color: var(--muted); text-align: right; }
-.driver-main { display: flex; flex-direction: column; min-width: 0; font-size: 0.88rem; }
-.driver-main .muted { font-size: 0.78rem; }
-.driver-distance { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.9rem; }
+.worker-item:last-child { border-bottom: 0; }
+.worker-item.is-highlighted { background: var(--accent-soft); }
+.worker-item.is-new { animation: flash 1.6s ease-out; }
+.list-rank { font-size: 0.78rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.worker-main { display: flex; flex-direction: column; min-width: 0; font-size: 0.88rem; }
+.worker-main a { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worker-main .muted { font-size: 0.78rem; }
+.worker-distance { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.9rem; text-align: right; white-space: nowrap; }
 @keyframes flash { from { background: var(--success-soft); } to { background: transparent; } }
 
 .live-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.86rem; color: var(--muted); }
@@ -410,7 +412,7 @@ select.input {
 .ping-new { animation: ping-pop 1s ease-out 3; transform-box: fill-box; transform-origin: center; }
 @keyframes ping-pop { 0% { transform: scale(1.8); } 100% { transform: scale(1); } }
 
-/* ---------- Reviews & menu ---------- */
+/* ---------- Reviews & portfolios (MongoDB) ---------- */
 
 .rating-big { display: inline-flex; align-items: center; gap: 8px; }
 .stars { position: relative; display: inline-block; font-size: 1rem; line-height: 1; letter-spacing: 1px; }
@@ -423,19 +425,7 @@ select.input {
 .review p { margin: 0; }
 .review-head { display: flex; justify-content: space-between; gap: 8px; font-size: 0.82rem; flex-wrap: wrap; }
 
-.menu { display: flex; flex-direction: column; gap: 14px; }
-.menu-toolbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
-.menu-category h3 { font-size: 0.95rem; margin-bottom: 8px; color: var(--accent); }
-.menu-items { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-.menu-item { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
-.menu-item.is-unavailable { background: var(--surface-2); }
-.menu-item.is-unavailable .menu-item-name { color: var(--muted); text-decoration: line-through; }
-.menu-item-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
-.menu-item-price { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.menu-item-desc { margin: 0; font-size: 0.84rem; color: var(--muted); }
-.menu-item-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.addon { font-size: 0.76rem; border: 1px dashed var(--border-strong); border-radius: 999px; padding: 1px 8px; }
-.menu-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; }
+.portfolio-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.8rem; }
 .raw-json {
   margin: 0; max-height: 360px; overflow: auto; font-family: var(--mono); font-size: 0.78rem;
   background: #17201f; color: #e8f0ef; padding: 12px; border-radius: var(--radius-sm);
@@ -470,7 +460,10 @@ select.input {
   .card { padding: 14px; }
   h1 { font-size: 1.35rem; }
   .search-input { width: 100%; }
-  .driver-map { height: 380px; }
+  .worker-map { height: 380px; }
+  .top-worker { grid-template-columns: 22px minmax(0, 1fr) auto; }
+  .top-worker .stars { display: none; }
+  .worker-item { grid-template-columns: 18px 10px minmax(0, 1fr) auto; gap: 6px; }
   .detail-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .combo-panel { width: min(300px, calc(100vw - 24px)); }
   .acting-label { display: none; }
@@ -514,6 +507,8 @@ select.input {
 .top-worker button { all: unset; cursor: pointer; color: var(--accent); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .top-worker button:hover { text-decoration: underline; }
 .top-worker button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.top-worker-score { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.top-worker:last-child { border-bottom: 0; }
 
 .checkbox-card {
   display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; width: 100%;

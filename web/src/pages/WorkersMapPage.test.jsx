@@ -98,7 +98,7 @@ test('lists available workers nearest first, around the Part A job site by defau
   const { container } = renderPage();
 
   expect(await screen.findByRole('link', { name: 'Asha Rao' })).toHaveAttribute('href', '/freelancers/f1');
-  const rows = [...container.querySelectorAll('.driver-item')].map((li) => li.textContent);
+  const rows = [...container.querySelectorAll('.worker-item')].map((li) => li.textContent);
   expect(rows[0]).toContain('Asha Rao');
   expect(rows[0]).toContain('0.42 km');
   expect(rows[0]).toContain('3 pings here');
@@ -116,7 +116,7 @@ test('shows the TTL explanation when nobody is within 5 km', async () => {
   stubApi(() => json(nearbyBody([])));
   renderPage();
   expect(await screen.findByText('No available workers within 5 km')).toBeInTheDocument();
-  expect(screen.getByText(/Seeded pings expire 2 hours after seeding/)).toBeInTheDocument();
+  expect(screen.getByText(/Locations older than 2 hours are removed automatically/)).toBeInTheDocument();
 });
 
 test('shows an error with Try again when MongoDB is unavailable, and recovers', async () => {
@@ -134,13 +134,13 @@ test('shows an error with Try again when MongoDB is unavailable, and recovers', 
   expect(await screen.findByRole('link', { name: 'Asha Rao' })).toBeInTheDocument();
 });
 
-test('Raw pings runs the Part A pipeline and disables the ping-age filter', async () => {
+test('Latest pings runs the Part A pipeline (5 nearest) and disables the ping-age filter', async () => {
   const fetchMock = stubApi(() => json(nearbyBody([worker()])));
   renderPage();
   await screen.findByRole('link', { name: 'Asha Rao' });
 
   expect(screen.getByLabelText('Ping age')).toBeEnabled();
-  await userEvent.click(screen.getByRole('tab', { name: /Raw pings/ }));
+  await userEvent.click(screen.getByRole('tab', { name: /Latest pings/ }));
 
   await waitFor(() => expect(nearbyCalls(fetchMock).some((u) => u.includes('mode=pings'))).toBe(true));
   expect(screen.getByLabelText('Ping age')).toBeDisabled();
