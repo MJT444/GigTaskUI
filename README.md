@@ -88,7 +88,7 @@ cd web && npm test                   # Fund-gig form, Explore, Workers map
 | Every screen shows “Could not load this” | API not running: `cd api && npm start` |
 | Only Workers map and Reviews show “Could not load this” | MongoDB is down: `docker compose up -d` |
 | Setup: “Windows cannot reach localhost:5433 / 27018” | `docker compose down`, restart Docker Desktop, run setup again |
-| Map: “No available workers within 5 km” | Seeded pings expire 2 h after seeding (TTL). Press **Add fresh pings** or turn on **Auto-add**. |
+| Map: “No available workers within 5 km” | Seeded pings expire 2 h after seeding (TTL). Press **Add fresh pings** or turn on **Simulate workers moving**. |
 | Map tiles grey | Tiles come from openstreetmap.org — needs internet |
 | Setup: ports 5433/27018 used by other containers | `docker stop <container names it prints>` |
 | Setup: “already has data” / “tables exist” | `scripts\setup.ps1 -Reset` |
@@ -119,8 +119,8 @@ Every screen has loading, empty and error states. Technical errors stay in API r
 4. **More than escrow** → shortfall → **Top up** → CREDIT row.
 5. **Escrow**: new rows on top match the trigger ✓ (seeded history explained); *Last 30 days*.
 6. **Analytics**: “N completed contracts are not in the view” → **Refresh** → time updates. Click a row in the DENSE_RANK table → that freelancer's chart.
-7. **Workers map**: **Auto-add pings** on; dots appear and pulse; change job site; *Latest pings (5 nearest)* (the Part A pipeline) vs *Workers*; click the map; open **How this works**.
-8. **Reviews**: click the 1★ bar; click a top worker → their reviews + portfolio; **Show stored document**; open **How this works**.
+7. **Workers map**: change the job site (the 5 km ripple plays); **Simulate workers moving** on, new dots pop and the *Nearest worker free to start* card updates; click a distance in the list to fly there; click the map; switch Night / Streets / Satellite. Show the Part A raw-pings query (`mode=pings`) in mongosh.
+8. **Reviews**: click the 1 ★ row; click a top-rated worker → their reviews + portfolio (✓ / struck-through details show the flexible document; show the raw document in mongosh).
 
 ## 4. Technology choices
 

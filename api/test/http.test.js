@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { optionalDate, parseMoney, parsePagination, requireUuid } from '../src/lib/http.js';
+import { optionalDate, optionalNumber, parseMoney, parsePagination, requireUuid } from '../src/lib/http.js';
 import { toRankingSubquery } from '../src/sql/partA.js';
 
 test('pagination clamps page and pageSize (never load everything)', () => {
@@ -41,10 +41,24 @@ test('the inherited Part A file is used as-is, with only the 30-day period param
   assert.match(sub, /LIMIT 50$/);
   assert.ok(sub.includes('make_interval(days => $1::int)'));
   assert.ok(!sub.includes("INTERVAL '30 days'"));
-  // Everything else is the file, character for character:
-  assert.equal(sub.replace('make_interval(days => $1::int)', "INTERVAL '30 days'"), file.trim().replace(/;\s*$/, ''));
+  // Everything else is the file, character for character (line endings aside:
+  // Git on Windows checks the file out with CRLF, and the loader reads lines):
+  const original = file.replace(/\r\n/g, '\n').trim().replace(/;\s*$/, '');
+  assert.equal(sub.replace('make_interval(days => $1::int)', "INTERVAL '30 days'"), original);
 });
 
 test('a changed Part A file is refused instead of silently mis-parameterized', () => {
   assert.throws(() => toRankingSubquery('SELECT 1'), /exactly one/);
+});
+
+test('optionalNumber: blank is missing, range and whole numbers enforced', () => {
+  assert.equal(optionalNumber(undefined, 'lat'), null);
+  assert.equal(optionalNumber('', 'lat'), null);
+  assert.equal(optionalNumber('   ', 'lat'), null, 'blank must not become 0');
+  assert.equal(optionalNumber('28.61', 'lat', { min: -90, max: 90 }), 28.61);
+  assert.throws(() => optionalNumber('91', 'lat', { min: -90, max: 90 }), { code: 'INVALID_NUMBER' });
+  assert.throws(() => optionalNumber('abc', 'lat'), { code: 'INVALID_NUMBER' });
+  assert.throws(() => optionalNumber('Infinity', 'lat'), { code: 'INVALID_NUMBER' });
+  assert.equal(optionalNumber('5', 'limit', { min: 1, max: 100, integer: true }), 5);
+  assert.throws(() => optionalNumber('2.5', 'limit', { min: 1, max: 100, integer: true }), { code: 'INVALID_NUMBER' });
 });
