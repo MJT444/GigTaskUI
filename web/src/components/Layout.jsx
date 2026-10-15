@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useActor } from '../context/ActorContext.jsx';
 import { ClientSearch } from './pickers.jsx';
@@ -64,6 +64,8 @@ export function Layout() {
         <Outlet />
       </main>
 
+      <footer className="footer">GigTask</footer>
     </div>
   );
 }
+
