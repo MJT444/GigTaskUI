@@ -18,7 +18,7 @@ export const workersRouter = Router();
 // seeder uses for freelancers (lat 28.40-28.90, lng 76.90-77.40), plus any
 // point clicked on the map. The first one is Part A's own example point.
 export const JOB_SITES = [
-  { id: 'part-a', name: 'Part A job site (Janpath)', ...PART_A_JOB_SITE },
+  { id: 'part-a', name: 'Janpath', ...PART_A_JOB_SITE }, // Part A's example point
   { id: 'connaught-place', name: 'Connaught Place', lat: 28.6315, lng: 77.2167 },
   { id: 'karol-bagh', name: 'Karol Bagh', lat: 28.6519, lng: 77.1909 },
   { id: 'saket', name: 'Saket', lat: 28.5245, lng: 77.2066 },
@@ -50,8 +50,8 @@ workersRouter.get(
   asyncHandler(async (req, res) => {
     const origin = resolveOrigin(req.query);
     const mode = req.query.mode === 'pings' ? 'pings' : 'workers';
-    const limit = optionalNumber(req.query.limit, 'limit', { min: 1, max: 100 }) ?? (mode === 'pings' ? 5 : 25);
-    const maxAgeMinutes = optionalNumber(req.query.maxAgeMinutes, 'maxAgeMinutes', { min: 1, max: 1440 });
+    const limit = optionalNumber(req.query.limit, 'limit', { min: 1, max: 100, integer: true }) ?? (mode === 'pings' ? 5 : 25);
+    const maxAgeMinutes = optionalNumber(req.query.maxAgeMinutes, 'maxAgeMinutes', { min: 1, max: 1440, integer: true });
 
     const pipeline =
       mode === 'pings'
@@ -140,7 +140,7 @@ workersRouter.post(
   asyncHandler(async (req, res) => {
     const body = req.body || {};
     const origin = resolveOrigin(body);
-    const count = optionalNumber(body.count, 'count', { min: 1, max: 50 }) ?? 8;
+    const count = optionalNumber(body.count, 'count', { min: 1, max: 50, integer: true }) ?? 8;
 
     const db = await getMongoDb();
     const pings = db.collection('WorkerLocations');

@@ -83,11 +83,18 @@ export function optionalDate(value, name) {
   return value;
 }
 
-export function optionalNumber(value, name, { min = -Infinity, max = Infinity } = {}) {
-  if (value === undefined || value === '') return null;
+/**
+ * Missing or blank -> null. Otherwise a finite number in [min, max]
+ * (a whole number when integer is true), else 400 INVALID_NUMBER.
+ * Blank strings are "missing": Number('  ') is 0, which would silently turn
+ * ?lat=%20 into latitude 0.
+ */
+export function optionalNumber(value, name, { min = -Infinity, max = Infinity, integer = false } = {}) {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
   const n = Number(value);
-  if (!Number.isFinite(n) || n < min || n > max) {
-    throw new HttpError(400, 'INVALID_NUMBER', `${name} must be a number between ${min} and ${max}`);
+  if (!Number.isFinite(n) || n < min || n > max || (integer && !Number.isInteger(n))) {
+    const kind = integer ? 'a whole number' : 'a number';
+    throw new HttpError(400, 'INVALID_NUMBER', `${name} must be ${kind} between ${min} and ${max}`);
   }
   return n;
 }
