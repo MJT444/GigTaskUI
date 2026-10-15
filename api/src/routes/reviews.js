@@ -27,7 +27,8 @@ function parsePeriod(value, fallback) {
 reviewsRouter.get(
   '/summary',
   asyncHandler(async (req, res) => {
-    const freelancerId = optionalUuid(req.query.freelancerId, 'freelancerId');
+    // Mongo stores ids in lower case; PostgreSQL accepts either.
+    const freelancerId = optionalUuid(req.query.freelancerId, 'freelancerId')?.toLowerCase() ?? null;
     const period = parsePeriod(req.query.days, freelancerId ? 'all' : '90');
     const since = period.days ? new Date(Date.now() - period.days * 86_400_000) : null;
 
@@ -42,6 +43,11 @@ reviewsRouter.get(
 
     const shaped = shapeFacetResult(facetDoc);
     const info = await freelancerInfo([...shaped.topWorkers.map((w) => w.freelancerId), freelancerId].filter(Boolean));
+    // A well-formed id that is not a freelancer: say so, instead of an empty
+    // summary for "Unknown".
+    if (freelancerId && !info.has(freelancerId)) {
+      throw new HttpError(404, 'FREELANCER_NOT_FOUND', 'That freelancer does not exist.');
+    }
 
     res.json({
       period: period.key,
@@ -57,7 +63,7 @@ reviewsRouter.get(
 reviewsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const freelancerId = optionalUuid(req.query.freelancerId, 'freelancerId');
+    const freelancerId = optionalUuid(req.query.freelancerId, 'freelancerId')?.toLowerCase() ?? null;
     const pg = parsePagination(req.query, { defaultPageSize: 10, maxPageSize: 50 });
     const filter = {};
     if (freelancerId) filter.freelancer_id = freelancerId;
