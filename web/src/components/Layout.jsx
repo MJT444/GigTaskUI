@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useActor } from '../context/ActorContext.jsx';
 import { ClientSearch } from './pickers.jsx';
@@ -65,7 +65,8 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="footer">GigTask · CS6.302 Assignment 2 · PostgreSQL + MongoDB · demo mode (no real login)</footer>
+      <footer className="footer">GigTask</footer>
     </div>
   );
 }
+
